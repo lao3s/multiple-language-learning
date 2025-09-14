@@ -76,11 +76,27 @@ export default function VocabularyLearning({
       // 根据难度模式获取单词
       if (difficultyMode === 'custom') {
         // 自定义模式：按等级选择
-        const words = vocabularyService.getRandomWords(questionCount, selectedLevel === 'all' ? undefined : selectedLevel);
+        let words: VocabularyItem[];
+        if (questionCount === -1) {
+          // 选择全部单词
+          words = selectedLevel === 'all' 
+            ? vocabularyService.getAllWords() 
+            : vocabularyService.getWordsByLevel(selectedLevel);
+        } else {
+          // 选择指定数量的单词
+          words = vocabularyService.getRandomWords(questionCount, selectedLevel === 'all' ? undefined : selectedLevel);
+        }
         setWordPool(words);
       } else {
         // 智能难度模式：根据难度模式选择
-        const words = vocabularyService.getWordsByDifficultyMode(difficultyMode, questionCount);
+        let words: VocabularyItem[];
+        if (questionCount === -1) {
+          // 选择全部单词（根据难度模式筛选）
+          words = vocabularyService.getAllWordsByDifficultyMode(difficultyMode);
+        } else {
+          // 选择指定数量的单词
+          words = vocabularyService.getWordsByDifficultyMode(difficultyMode, questionCount);
+        }
         setWordPool(words);
       }
     }
@@ -90,10 +106,13 @@ export default function VocabularyLearning({
   const startSession = useCallback(() => {
     if (wordPool.length === 0) return;
     
+    // 计算实际题目数量：如果选择了"全部单词"，则使用单词池的长度
+    const actualQuestionCount = questionCount === -1 ? wordPool.length : Math.min(questionCount, wordPool.length);
+    
     const newSession: StudySession = {
       mode: currentMode,
       difficultyMode: difficultyMode,
-      totalQuestions: Math.min(questionCount, wordPool.length),
+      totalQuestions: actualQuestionCount,
       currentQuestion: 0,
       correctAnswers: 0,
       wrongAnswers: [],
@@ -130,9 +149,23 @@ export default function VocabularyLearning({
       freshWords = storageService.getWrongWords();
     } else {
       if (difficultyMode === 'custom') {
-        freshWords = vocabularyService.getRandomWords(questionCount, selectedLevel === 'all' ? undefined : selectedLevel);
+        if (questionCount === -1) {
+          // 全部单词模式
+          freshWords = selectedLevel === 'all' 
+            ? vocabularyService.getAllWords() 
+            : vocabularyService.getWordsByLevel(selectedLevel);
+        } else {
+          // 指定数量模式
+          freshWords = vocabularyService.getRandomWords(questionCount, selectedLevel === 'all' ? undefined : selectedLevel);
+        }
       } else {
-        freshWords = vocabularyService.getWordsByDifficultyMode(difficultyMode, questionCount);
+        if (questionCount === -1) {
+          // 全部单词模式（根据难度模式筛选）
+          freshWords = vocabularyService.getAllWordsByDifficultyMode(difficultyMode);
+        } else {
+          // 指定数量模式
+          freshWords = vocabularyService.getWordsByDifficultyMode(difficultyMode, questionCount);
+        }
       }
     }
     
@@ -617,14 +650,18 @@ export default function VocabularyLearning({
                     题目数量
                   </label>
                   <select 
-                    value={questionCount}
-                    onChange={(e) => setQuestionCount(Number(e.target.value))}
+                    value={questionCount === -1 ? -1 : questionCount}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      setQuestionCount(value);
+                    }}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value={10}>10 题</option>
                     <option value={20}>20 题</option>
                     <option value={50}>50 题</option>
                     <option value={100}>100 题</option>
+                    <option value={-1}>全部单词</option>
                   </select>
                 </div>
 
@@ -697,6 +734,50 @@ export default function VocabularyLearning({
                   </p>
                 </div>
               )}
+
+              {/* 显示单词数量信息 */}
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-bold text-blue-800 mb-2">📚 单词库信息</h4>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
+                  <div className="text-center p-2 bg-white rounded border">
+                    <div className="font-bold text-blue-700">总计</div>
+                    <div className="text-gray-600">{vocabularyService.getAllWords().length}</div>
+                  </div>
+                  {['A1', 'A2', 'B1', 'B2', 'C1'].map(level => {
+                    const levelWords = vocabularyService.getWordsByLevel(level);
+                    return (
+                      <div key={level} className="text-center p-2 bg-white rounded border">
+                        <div className="font-bold text-blue-700">{level}</div>
+                        <div className="text-gray-600">{levelWords.length}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2 text-xs">
+                  {[
+                    { mode: 'beginner', name: '小学生', levels: ['A1', 'A2'] },
+                    { mode: 'expert', name: '高手', levels: ['B1', 'B2'] },
+                    { mode: 'hell', name: '地狱', levels: ['C1'] },
+                    { mode: 'custom', name: '自定义', levels: selectedLevel === 'all' ? ['A1', 'A2', 'B1', 'B2', 'C1'] : [selectedLevel] }
+                  ].map(({ mode, name, levels }) => {
+                    const count = levels.reduce((sum, level) => sum + vocabularyService.getWordsByLevel(level).length, 0);
+                    return (
+                      <div key={mode} className={`text-center p-2 rounded border ${
+                        difficultyMode === mode ? 'bg-blue-100 border-blue-300' : 'bg-white'
+                      }`}>
+                        <div className="font-bold text-blue-700">{name}模式</div>
+                        <div className="text-gray-600">{count} 词</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-blue-600 mt-2">
+                  {questionCount === -1 
+                    ? `🎯 已选择：全部单词 (${wordPool.length} 个)`
+                    : `🎯 已选择：${Math.min(questionCount, wordPool.length)} 个单词`
+                  }
+                </p>
+              </div>
             </div>
           )}
 
@@ -802,7 +883,10 @@ export default function VocabularyLearning({
             
             {wordPool.length > 0 && (
               <p className="text-gray-600 mt-4">
-                准备学习 {Math.min(questionCount, wordPool.length)} 个单词
+                准备学习 {questionCount === -1 ? wordPool.length : Math.min(questionCount, wordPool.length)} 个单词
+                {questionCount === -1 && (
+                  <span className="text-blue-600 font-medium"> (全部单词)</span>
+                )}
               </p>
             )}
           </div>

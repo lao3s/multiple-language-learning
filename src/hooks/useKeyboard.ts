@@ -22,6 +22,14 @@ export const useKeyboard = ({
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (disabled) return;
 
+    // 检查当前焦点是否在输入框上
+    const activeElement = document.activeElement;
+    const isInputFocused = activeElement && (
+      activeElement.tagName === 'INPUT' || 
+      activeElement.tagName === 'TEXTAREA' ||
+      activeElement.contentEditable === 'true'
+    );
+
     switch (event.key) {
       case 'Enter':
         event.preventDefault();
@@ -32,20 +40,32 @@ export const useKeyboard = ({
         onEscape?.();
         break;
       case 'ArrowUp':
-        event.preventDefault();
-        onArrowUp?.();
+        // 如果输入框有焦点，不拦截方向键，让输入框处理
+        if (!isInputFocused) {
+          event.preventDefault();
+          onArrowUp?.();
+        }
         break;
       case 'ArrowDown':
-        event.preventDefault();
-        onArrowDown?.();
+        // 如果输入框有焦点，不拦截方向键，让输入框处理
+        if (!isInputFocused) {
+          event.preventDefault();
+          onArrowDown?.();
+        }
         break;
       case 'ArrowLeft':
-        event.preventDefault();
-        onArrowLeft?.();
+        // 如果输入框有焦点，不拦截方向键，让输入框处理
+        if (!isInputFocused) {
+          event.preventDefault();
+          onArrowLeft?.();
+        }
         break;
       case 'ArrowRight':
-        event.preventDefault();
-        onArrowRight?.();
+        // 如果输入框有焦点，不拦截方向键，让输入框处理
+        if (!isInputFocused) {
+          event.preventDefault();
+          onArrowRight?.();
+        }
         break;
     }
   }, [disabled, onEnter, onEscape, onArrowUp, onArrowDown, onArrowLeft, onArrowRight]);

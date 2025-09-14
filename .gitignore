@@ -130,8 +130,8 @@ Thumbs.db
 # Local development files
 start.bat
 
-# PDF files (learning materials)
-*.pdf
-
 # Large data files that can be regenerated
 vocabulary_clean.json
+
+# Local materials
+local_materials/

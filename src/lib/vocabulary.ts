@@ -204,6 +204,50 @@ export class VocabularyService {
     return shuffled.slice(0, count);
   }
 
+  // 根据难度模式获取所有符合条件的单词（不限制数量）
+  getAllWordsByDifficultyMode(mode: DifficultyMode): VocabularyItem[] {
+    let words: VocabularyItem[] = [];
+
+    switch (mode) {
+      case 'beginner':
+        // 小学生模式：只考A级题（A1-A2）
+        words = this.data.vocabulary.filter(word => 
+          word.level === 'A1' || word.level === 'A2'
+        );
+        break;
+      
+      case 'expert':
+        // 高手模式：只考B级题（B1-B2）
+        words = this.data.vocabulary.filter(word => 
+          word.level === 'B1' || word.level === 'B2'
+        );
+        break;
+      
+      case 'hell':
+        // 地狱模式：只考C级题（C1）
+        words = this.data.vocabulary.filter(word => 
+          word.level === 'C1'
+        );
+        break;
+      
+      case 'auto':
+        // 自动模式：返回所有单词，让权重算法决定分布
+        words = this.getAllWords();
+        break;
+      
+      case 'custom':
+        // 自定义模式：由调用者指定等级
+        words = this.getAllWords();
+        break;
+      
+      default:
+        words = this.getAllWords();
+    }
+
+    // 随机打乱
+    return [...words].sort(() => Math.random() - 0.5);
+  }
+
   // 自动模式的单词选择算法
   private getAutoModeWords(count: number): VocabularyItem[] {
     const levelStats = storageService.getLevelAccuracyStats();
