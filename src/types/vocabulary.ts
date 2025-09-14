@@ -74,6 +74,66 @@ export interface StudyStats {
   wordStats: WordStats[];
 }
 
+// 词组相关类型定义
+export interface PhraseItem {
+  english: string;
+  chinese: string;
+  level?: string; // 可选，用于未来扩展
+  difficulty_score?: number; // 可选，用于未来扩展
+}
+
+export interface PhraseData {
+  title: string;
+  source: string;
+  total_pages: number;
+  phrases: {
+    [key: string]: PhraseItem[];
+  };
+  statistics?: {
+    [key: string]: number;
+  };
+}
+
+// 词组学习会话
+export interface PhraseStudySession {
+  mode: StudyMode;
+  difficultyMode: DifficultyMode;
+  totalQuestions: number;
+  currentQuestion: number;
+  correctAnswers: number;
+  wrongAnswers: PhraseItem[];
+  startTime: Date;
+  questionRecords?: PhraseQuestionRecord[];
+}
+
+export interface PhraseQuestionRecord {
+  phrase: PhraseItem;
+  questionMode: StudyMode;
+  userAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  answerTime: Date;
+}
+
+// 词组统计
+export interface PhraseStats {
+  phrase: string;
+  totalAttempts: number;
+  correctAttempts: number;
+  wrongAttempts: number;
+  accuracy: number;
+  lastAttempted: Date;
+}
+
+export interface PhraseStudyStats {
+  totalSessions: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  averageAccuracy: number;
+  weakPhrases: PhraseItem[];
+  phraseStats: PhraseStats[];
+}
+
 export interface LanguageSystem {
   id: string;
   name: string;

@@ -132,6 +132,7 @@ start.bat
 
 # Large data files that can be regenerated
 vocabulary_clean.json
+phrases.json
 
 # Local materials
 local_materials/

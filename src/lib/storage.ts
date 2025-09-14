@@ -1,10 +1,14 @@
-import { VocabularyItem, StudyStats, StudySession, LevelStats, WordStats } from '@/types/vocabulary';
+import { VocabularyItem, StudyStats, StudySession, LevelStats, WordStats, PhraseItem, PhraseStats, PhraseStudyStats, PhraseStudySession } from '@/types/vocabulary';
 import { fileStorageService } from './fileStorage';
 
 const STORAGE_KEYS = {
   WRONG_WORDS: 'english-learning-wrong-words',
   STUDY_STATS: 'english-learning-study-stats',
   CURRENT_SESSION: 'english-learning-current-session',
+  // 词组相关存储键
+  WRONG_PHRASES: 'english-learning-wrong-phrases',
+  PHRASE_STATS: 'english-learning-phrase-stats',
+  CURRENT_PHRASE_SESSION: 'english-learning-current-phrase-session',
 } as const;
 
 export class StorageService {
@@ -301,6 +305,165 @@ export class StorageService {
    */
   async checkFileSystemPermissions(): Promise<boolean> {
     return await fileStorageService.checkFileSystemPermissions();
+  }
+
+  // ===== 词组相关方法 =====
+
+  // 错误词组管理
+  getWrongPhrases(): PhraseItem[] {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem(STORAGE_KEYS.WRONG_PHRASES);
+    return stored ? JSON.parse(stored) : [];
+  }
+
+  addWrongPhrase(phrase: PhraseItem): void {
+    if (typeof window === 'undefined') return;
+    const wrongPhrases = this.getWrongPhrases();
+    const exists = wrongPhrases.find(p => p.english === phrase.english);
+    if (!exists) {
+      wrongPhrases.push(phrase);
+      localStorage.setItem(STORAGE_KEYS.WRONG_PHRASES, JSON.stringify(wrongPhrases));
+    }
+  }
+
+  removeWrongPhrase(phrase: PhraseItem): void {
+    if (typeof window === 'undefined') return;
+    const wrongPhrases = this.getWrongPhrases();
+    const filtered = wrongPhrases.filter(p => p.english !== phrase.english);
+    localStorage.setItem(STORAGE_KEYS.WRONG_PHRASES, JSON.stringify(filtered));
+  }
+
+  clearWrongPhrases(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(STORAGE_KEYS.WRONG_PHRASES);
+  }
+
+  // 词组学习统计
+  getPhraseStudyStats(): PhraseStudyStats {
+    if (typeof window === 'undefined') {
+      return {
+        totalSessions: 0,
+        totalQuestions: 0,
+        correctAnswers: 0,
+        averageAccuracy: 0,
+        weakPhrases: [],
+        phraseStats: [],
+      };
+    }
+    
+    const stored = localStorage.getItem(STORAGE_KEYS.PHRASE_STATS);
+    const defaultStats = {
+      totalSessions: 0,
+      totalQuestions: 0,
+      correctAnswers: 0,
+      averageAccuracy: 0,
+      weakPhrases: [],
+      phraseStats: [],
+    };
+    
+    if (stored) {
+      const parsedStats = JSON.parse(stored);
+      return {
+        ...defaultStats,
+        ...parsedStats,
+        phraseStats: parsedStats.phraseStats || [],
+      };
+    }
+    
+    return defaultStats;
+  }
+
+  updatePhraseStudyStats(session: PhraseStudySession): void {
+    if (typeof window === 'undefined') return;
+    const stats = this.getPhraseStudyStats();
+    
+    stats.totalSessions += 1;
+    stats.totalQuestions += session.totalQuestions;
+    stats.correctAnswers += session.correctAnswers;
+    stats.averageAccuracy = (stats.correctAnswers / stats.totalQuestions) * 100;
+    
+    // 更新薄弱词组
+    session.wrongAnswers.forEach(phrase => {
+      const existingIndex = stats.weakPhrases.findIndex(p => p.english === phrase.english);
+      if (existingIndex < 0) {
+        stats.weakPhrases.push(phrase);
+      }
+    });
+
+    localStorage.setItem(STORAGE_KEYS.PHRASE_STATS, JSON.stringify(stats));
+  }
+
+  // 更新单个词组的统计
+  updatePhraseStats(phrase: PhraseItem, isCorrect: boolean): void {
+    if (typeof window === 'undefined') return;
+    const stats = this.getPhraseStudyStats();
+    
+    // 查找或创建该词组的统计记录
+    let phraseStat = stats.phraseStats.find(ps => ps.phrase === phrase.english);
+    if (!phraseStat) {
+      phraseStat = {
+        phrase: phrase.english,
+        totalAttempts: 0,
+        correctAttempts: 0,
+        wrongAttempts: 0,
+        accuracy: 0,
+        lastAttempted: new Date(),
+      };
+      stats.phraseStats.push(phraseStat);
+    }
+    
+    // 更新统计数据
+    phraseStat.totalAttempts += 1;
+    if (isCorrect) {
+      phraseStat.correctAttempts += 1;
+    } else {
+      phraseStat.wrongAttempts += 1;
+    }
+    phraseStat.accuracy = (phraseStat.correctAttempts / phraseStat.totalAttempts) * 100;
+    phraseStat.lastAttempted = new Date();
+    
+    localStorage.setItem(STORAGE_KEYS.PHRASE_STATS, JSON.stringify(stats));
+  }
+
+  // 获取词组统计
+  getPhraseStats(): PhraseStats[] {
+    const stats = this.getPhraseStudyStats();
+    return stats.phraseStats.sort((a, b) => {
+      // 按最后尝试时间排序，最近的在前
+      return new Date(b.lastAttempted).getTime() - new Date(a.lastAttempted).getTime();
+    });
+  }
+
+  // 获取特定词组的统计
+  getPhraseStat(phrase: string): PhraseStats | null {
+    const phraseStats = this.getPhraseStats();
+    return phraseStats.find(ps => ps.phrase === phrase) || null;
+  }
+
+  // 获取最需要复习的词组（正确率最低的）
+  getPhrasesNeedingReview(limit: number = 10): PhraseStats[] {
+    const phraseStats = this.getPhraseStats();
+    return phraseStats
+      .filter(ps => ps.totalAttempts >= 2) // 至少尝试过2次
+      .sort((a, b) => a.accuracy - b.accuracy) // 按正确率升序排序
+      .slice(0, limit);
+  }
+
+  // 当前词组学习会话
+  saveCurrentPhraseSession(session: PhraseStudySession): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.CURRENT_PHRASE_SESSION, JSON.stringify(session));
+  }
+
+  getCurrentPhraseSession(): PhraseStudySession | null {
+    if (typeof window === 'undefined') return null;
+    const stored = localStorage.getItem(STORAGE_KEYS.CURRENT_PHRASE_SESSION);
+    return stored ? JSON.parse(stored) : null;
+  }
+
+  clearCurrentPhraseSession(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_PHRASE_SESSION);
   }
 }
 
