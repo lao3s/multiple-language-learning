@@ -108,7 +108,7 @@ export default function PhraseLearning({
   }, [currentMode, difficultyMode, questionCount, phrasePool]);
 
   // 加载下一题
-  const loadNextQuestion = useCallback((currentSession: PhraseStudySession) => {
+  const loadNextQuestion = useCallback((currentSession: PhraseStudySession, customPhrasePool?: PhraseItem[]) => {
     if (currentSession.currentQuestion >= currentSession.totalQuestions) {
       // 学习会话结束
       finishSession(currentSession);
@@ -117,10 +117,13 @@ export default function PhraseLearning({
 
     let phrase: PhraseItem;
     
+    // 优先使用传入的自定义词组池（用于错题重做）
+    const activePhrasePool = customPhrasePool || phrasePool;
+    
     // 检查是否有预设的词组池（错题重做时使用）
-    if (phrasePool.length > 0 && currentSession.currentQuestion < phrasePool.length) {
-      // 使用预设词组池中的词组（按顺序或随机）
-      phrase = phrasePool[currentSession.currentQuestion];
+    if (activePhrasePool.length > 0 && currentSession.currentQuestion < activePhrasePool.length) {
+      // 使用预设词组池中的词组（按顺序）
+      phrase = activePhrasePool[currentSession.currentQuestion];
       console.log('错题重做模式 - 使用词组池中的词组:', phrase, '题目索引:', currentSession.currentQuestion);
     } else {
       // 正常模式：重新生成词组池，确保题目随机性
@@ -421,7 +424,8 @@ export default function PhraseLearning({
                     console.log('设置错题词组池:', wrongAnswersToUse);
                     setSession(wrongPhrasesSession);
                     setIsStarted(true);
-                    loadNextQuestion(wrongPhrasesSession);
+                    // 传入错题列表，避免依赖异步状态更新
+                    loadNextQuestion(wrongPhrasesSession, wrongAnswersToUse);
                   }}
                   className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200"
                 >

@@ -128,7 +128,7 @@ export default function VocabularyLearning({
   }, [currentMode, difficultyMode, questionCount, wordPool]);
 
   // 加载下一题
-  const loadNextQuestion = useCallback((currentSession: StudySession) => {
+  const loadNextQuestion = useCallback((currentSession: StudySession, customWordPool?: VocabularyItem[]) => {
     if (currentSession.currentQuestion >= currentSession.totalQuestions) {
       // 学习会话结束
       finishSession(currentSession);
@@ -137,10 +137,13 @@ export default function VocabularyLearning({
 
     let word: VocabularyItem;
     
+    // 优先使用传入的自定义单词池（用于错题重做）
+    const activeWordPool = customWordPool || wordPool;
+    
     // 检查是否有预设的单词池（错题重做时使用）
-    if (wordPool.length > 0 && currentSession.currentQuestion < wordPool.length) {
-      // 使用预设单词池中的单词（按顺序或随机）
-      word = wordPool[currentSession.currentQuestion];
+    if (activeWordPool.length > 0 && currentSession.currentQuestion < activeWordPool.length) {
+      // 使用预设单词池中的单词（按顺序）
+      word = activeWordPool[currentSession.currentQuestion];
       console.log('错题重做模式 - 使用单词池中的单词:', word, '题目索引:', currentSession.currentQuestion);
     } else {
       // 正常模式：重新生成单词池，确保题目随机性
@@ -543,7 +546,8 @@ export default function VocabularyLearning({
                     console.log('设置错题单词池:', wrongAnswersToUse);
                     setSession(wrongWordsSession);
                     setIsStarted(true);
-                    loadNextQuestion(wrongWordsSession);
+                    // 传入错题列表，避免依赖异步状态更新
+                    loadNextQuestion(wrongWordsSession, wrongAnswersToUse);
                   }}
                   className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200"
                 >
