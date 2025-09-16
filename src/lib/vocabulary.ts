@@ -120,24 +120,40 @@ export class VocabularyService {
   }
 
   generateOptions(correctWord: VocabularyItem, mode: StudyMode, count: number = 4): string[] {
+    console.log('🎯 generateOptions调用 - 正确词汇:', correctWord);
+    console.log('🎯 generateOptions调用 - 模式:', mode);
+    
     const allWords = this.getAllWords();
+    console.log('🎯 generateOptions调用 - 可用词汇数量:', allWords.length);
+    
+    if (allWords.length === 0) {
+      console.error('❌ generateOptions - 没有可用词汇');
+      return [];
+    }
+    
     const options = new Set<string>();
     
     // Add correct answer
     const correctAnswer = mode === 'chinese-to-english' ? correctWord.english : correctWord.chinese;
     options.add(correctAnswer);
+    console.log('✅ generateOptions - 正确答案:', correctAnswer);
 
     // Add random wrong answers
-    while (options.size < count) {
+    let attempts = 0;
+    while (options.size < count && attempts < 100) {
       const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
       const option = mode === 'chinese-to-english' ? randomWord.english : randomWord.chinese;
       
       if (option !== correctAnswer) {
         options.add(option);
+        console.log('➕ generateOptions - 添加选项:', option);
       }
+      attempts++;
     }
 
-    return Array.from(options).sort(() => Math.random() - 0.5);
+    const result = Array.from(options).sort(() => Math.random() - 0.5);
+    console.log('🏁 generateOptions - 最终结果:', result);
+    return result;
   }
 
   getMetadata() {

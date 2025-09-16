@@ -188,7 +188,10 @@ export default function VocabularyLearning({
     
     // 只在选择模式下生成选项
     if (!isInputMode) {
+      console.log('🔍 生成选项 - 当前词汇:', word);
+      console.log('🔍 生成选项 - 问题模式:', questionMode);
       const questionOptions = vocabularyService.generateOptions(word, questionMode);
+      console.log('🔍 生成选项 - 结果:', questionOptions);
       setOptions(questionOptions);
     } else {
       setOptions([]);

@@ -1,4 +1,6 @@
 import { VocabularyItem, PhraseItem } from '@/types/vocabulary';
+import vocabularyData from '@/data/vocabulary_clean.json';
+import phrasesData from '@/data/phrases_c1_extracted.json';
 
 // 数据适配器接口
 export interface DataAdapter {
@@ -25,14 +27,29 @@ export class JsonDataAdapter implements DataAdapter {
 
   private loadData() {
     try {
-      // 使用require动态加载，避免构建时的问题
-      this.vocabularyData = require('@/data/vocabulary_clean.json');
-      this.phraseData = require('@/data/phrases_c1_extracted.json');
+      // 使用静态导入的数据
+      this.vocabularyData = vocabularyData as any;
+      this.phraseData = phrasesData as any;
       
-      this.allVocabulary = this.vocabularyData.vocabulary || [];
+      // 确保数据结构正确
+      if (this.vocabularyData && this.vocabularyData.vocabulary) {
+        this.allVocabulary = this.vocabularyData.vocabulary;
+      } else {
+        console.error('❌ 词汇数据结构错误:', this.vocabularyData);
+        this.allVocabulary = [];
+      }
+      
+      // 处理短语数据
       this.allPhrases = this.processPhrasesData();
+      
+      console.log('✅ JSON数据加载完成:', this.allVocabulary.length, '个词汇,', this.allPhrases.length, '个短语');
+      
+      // 验证第一个词汇的结构
+      if (this.allVocabulary.length > 0) {
+        console.log('📝 第一个词汇示例:', this.allVocabulary[0]);
+      }
     } catch (error) {
-      console.error('加载JSON数据失败:', error);
+      console.error('❌ 加载JSON数据失败:', error);
       this.allVocabulary = [];
       this.allPhrases = [];
     }
