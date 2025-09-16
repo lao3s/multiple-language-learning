@@ -739,7 +739,7 @@ export default function PhraseLearning({
                 </h1>
                 <p className="text-sm text-gray-600">
                   {currentQuestionMode === 'chinese-to-english' ? '中译英' : '英译中'} • 
-                  正确率: {session.currentQuestion > 0 ? ((session.correctAnswers / session.currentQuestion) * 100).toFixed(1) : 0}%
+                  正确率: {session.currentQuestion > 0 ? ((session.correctAnswers / (session.correctAnswers + session.wrongAnswers.length)) * 100).toFixed(1) : 0}%
                 </p>
               </div>
             </div>

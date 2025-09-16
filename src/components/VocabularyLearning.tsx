@@ -67,6 +67,24 @@ export default function VocabularyLearning({
     }
   }, [isStarted, currentWord, isInputMode, showResult]);
 
+  // 当模式切换时重新生成选项
+  useEffect(() => {
+    if (isStarted && currentWord && !showResult) {
+      console.log('🔄 模式切换触发 - isInputMode:', isInputMode);
+      if (!isInputMode) {
+        // 切换到选择模式，生成选项
+        console.log('🔄 切换到选择模式，生成选项');
+        const questionOptions = vocabularyService.generateOptions(currentWord, currentQuestionMode);
+        console.log('🔄 重新生成的选项:', questionOptions);
+        setOptions(questionOptions);
+      } else {
+        // 切换到输入模式，清空选项
+        console.log('🔄 切换到输入模式，清空选项');
+        setOptions([]);
+      }
+    }
+  }, [isInputMode, currentWord, currentQuestionMode, isStarted, showResult]);
+
   // 初始化单词池
   useEffect(() => {
     if (isReviewMode) {
@@ -187,10 +205,17 @@ export default function VocabularyLearning({
     setCurrentQuestionMode(questionMode);
     
     // 只在选择模式下生成选项
+    console.log('🔍 loadNextQuestion - isInputMode:', isInputMode);
+    console.log('🔍 loadNextQuestion - 当前词汇:', word);
+    console.log('🔍 loadNextQuestion - 问题模式:', questionMode);
+    
     if (!isInputMode) {
+      console.log('🔍 开始生成选项...');
       const questionOptions = vocabularyService.generateOptions(word, questionMode);
+      console.log('🔍 生成的选项:', questionOptions);
       setOptions(questionOptions);
     } else {
+      console.log('⚠️ 输入模式，清空选项');
       setOptions([]);
     }
     
@@ -933,7 +958,7 @@ export default function VocabularyLearning({
                 </h1>
                 <p className="text-sm text-gray-600">
                   {currentQuestionMode === 'chinese-to-english' ? '中译英' : '英译中'} • 
-                  正确率: {session.currentQuestion > 0 ? ((session.correctAnswers / session.currentQuestion) * 100).toFixed(1) : 0}%
+                  正确率: {session.currentQuestion > 0 ? ((session.correctAnswers / (session.correctAnswers + session.wrongAnswers.length)) * 100).toFixed(1) : 0}%
                 </p>
               </div>
             </div>
@@ -1018,6 +1043,14 @@ export default function VocabularyLearning({
           ) : (
             /* Answer Options */
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {console.log('🔍 渲染选项 - options数组:', options)}
+              {console.log('🔍 渲染选项 - options长度:', options.length)}
+              {console.log('🔍 渲染选项 - isInputMode:', isInputMode)}
+              {options.length === 0 && (
+                <div className="col-span-2 p-4 text-center text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
+                  ⚠️ 没有可用的选项 (调试信息: options长度={options.length})
+                </div>
+              )}
               {options.map((option, index) => (
                 <button
                   key={index}
