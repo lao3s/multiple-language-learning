@@ -5,14 +5,19 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/ensure-database.js",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate": "node scripts/migrate-to-sqlite.js",
+    "query": "node scripts/query-database.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@types/better-sqlite3": "^7.6.13",
     "autoprefixer": "^10.4.21",
+    "better-sqlite3": "^12.2.0",
     "next": "14.2.14",
     "react": "^18",
     "react-dom": "^18"

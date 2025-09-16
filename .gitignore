@@ -131,9 +131,8 @@ Thumbs.db
 start.bat
 
 # Large data files that can be regenerated
-vocabulary_clean.json
-phrases.json
 phrases_c1_extracted.json
+vocabulary_clean.json
 
 # Local materials
 local_materials/

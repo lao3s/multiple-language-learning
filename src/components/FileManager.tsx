@@ -5,8 +5,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faDownload, 
   faUpload, 
-  faBackup, 
-  faRestore,
+  faDatabase,
+  faUndo,
   faInfoCircle,
   faCheckCircle,
   faExclamationTriangle,
@@ -271,7 +271,7 @@ export default function FileManager({ onClose }: FileManagerProps) {
               >
                 <div className="text-center">
                   <FontAwesomeIcon 
-                    icon={isLoading ? faSpinner : faBackup} 
+                    icon={isLoading ? faSpinner : faDatabase} 
                     className={`text-2xl mb-2 ${isLoading ? 'animate-spin' : ''}`}
                   />
                   <h4 className="font-medium mb-1">创建完整备份</h4>
@@ -286,7 +286,7 @@ export default function FileManager({ onClose }: FileManagerProps) {
               >
                 <div className="text-center">
                   <FontAwesomeIcon 
-                    icon={isLoading ? faSpinner : faRestore} 
+                    icon={isLoading ? faSpinner : faUndo} 
                     className={`text-2xl mb-2 ${isLoading ? 'animate-spin' : ''}`}
                   />
                   <h4 className="font-medium mb-1">恢复备份</h4>

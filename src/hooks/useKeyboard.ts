@@ -27,7 +27,7 @@ export const useKeyboard = ({
     const isInputFocused = activeElement && (
       activeElement.tagName === 'INPUT' || 
       activeElement.tagName === 'TEXTAREA' ||
-      activeElement.contentEditable === 'true'
+      (activeElement as HTMLElement).contentEditable === 'true'
     );
 
     switch (event.key) {

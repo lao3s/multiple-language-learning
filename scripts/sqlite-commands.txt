@@ -1,0 +1,112 @@
+# SQLite 命令行查询示例
+
+## 连接到数据库
+sqlite3 data/english-learning.db
+
+## 基本查询命令
+
+### 1. 显示所有表
+.tables
+
+### 2. 查看表结构
+.schema vocabulary
+.schema phrases
+
+### 3. 设置输出格式
+.mode column
+.headers on
+
+### 4. 基本统计查询
+SELECT COUNT(*) as 词汇总数 FROM vocabulary;
+SELECT COUNT(*) as 短语总数 FROM phrases;
+
+### 5. 按等级统计词汇
+SELECT level as 等级, COUNT(*) as 数量 
+FROM vocabulary 
+GROUP BY level 
+ORDER BY level;
+
+### 6. 按类别统计词汇
+SELECT category as 类别, COUNT(*) as 数量 
+FROM vocabulary 
+WHERE category IS NOT NULL 
+GROUP BY category 
+ORDER BY 数量 DESC;
+
+### 7. 查看词汇示例
+SELECT english as 英文, chinese as 中文, level as 等级, category as 类别 
+FROM vocabulary 
+LIMIT 10;
+
+### 8. 查看短语示例
+SELECT english as 英文, chinese as 中文, difficulty_score as 难度分数 
+FROM phrases 
+LIMIT 10;
+
+### 9. 搜索特定词汇
+SELECT english, chinese, level 
+FROM vocabulary 
+WHERE english LIKE '%animal%' OR chinese LIKE '%动物%';
+
+### 10. 搜索特定短语
+SELECT english, chinese 
+FROM phrases 
+WHERE english LIKE '%time%';
+
+### 11. 按难度查询短语
+SELECT english, chinese, difficulty_score 
+FROM phrases 
+WHERE difficulty_score > 60 
+ORDER BY difficulty_score DESC 
+LIMIT 10;
+
+### 12. 按等级查询词汇
+SELECT english, chinese, category 
+FROM vocabulary 
+WHERE level = 'C1' 
+LIMIT 20;
+
+### 13. 复杂查询 - 统计每个等级的平均难度
+SELECT 
+    level as 等级,
+    COUNT(*) as 词汇数量,
+    AVG(difficulty_score) as 平均难度,
+    MIN(difficulty_score) as 最低难度,
+    MAX(difficulty_score) as 最高难度
+FROM vocabulary 
+WHERE level IS NOT NULL 
+GROUP BY level 
+ORDER BY level;
+
+### 14. 查找最长的短语
+SELECT 
+    english,
+    chinese,
+    LENGTH(english) as 长度
+FROM phrases 
+ORDER BY LENGTH(english) DESC 
+LIMIT 10;
+
+### 15. 查找包含特定模式的内容
+SELECT english, chinese 
+FROM vocabulary 
+WHERE english REGEXP '^[aeiou]' -- 以元音字母开头的单词
+LIMIT 10;
+
+### 16. 导出查询结果到CSV
+.mode csv
+.output vocabulary_export.csv
+SELECT * FROM vocabulary WHERE level = 'A1';
+.output stdout
+.mode column
+
+### 17. 退出SQLite
+.quit
+
+## 使用技巧
+
+1. 使用 .help 查看所有可用命令
+2. 使用 .mode 改变输出格式 (column, csv, json等)
+3. 使用 .headers on/off 控制是否显示列标题
+4. 使用 .output filename 将结果输出到文件
+5. 使用 .read filename.sql 执行SQL文件中的命令

@@ -4,6 +4,7 @@ export interface VocabularyItem {
   pos: string;
   level: string;
   difficulty_score: number;
+  category?: string;
 }
 
 export interface VocabularyData {

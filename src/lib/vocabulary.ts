@@ -1,10 +1,8 @@
 import { VocabularyData, VocabularyItem, StudyMode, DifficultyMode, DifficultyModeConfig } from '@/types/vocabulary';
-import vocabularyData from '@/data/vocabulary_clean.json';
 import { storageService } from './storage';
+import { dataAdapter } from './dataAdapter';
 
 export class VocabularyService {
-  private data: VocabularyData;
-
   // 难度模式配置
   private difficultyModes: DifficultyModeConfig[] = [
     {
@@ -45,15 +43,19 @@ export class VocabularyService {
   ];
 
   constructor() {
-    this.data = vocabularyData as VocabularyData;
+    // 不再需要加载JSON数据，改用数据库
   }
 
   getAllWords(): VocabularyItem[] {
-    return this.data.vocabulary;
+    return dataAdapter.getAllVocabulary();
   }
 
   getWordsByLevel(level: string): VocabularyItem[] {
-    return this.data.vocabulary.filter(word => word.level === level);
+    return dataAdapter.getVocabularyByLevel(level);
+  }
+
+  getWordsByDifficultyRange(min: number, max: number): VocabularyItem[] {
+    return dataAdapter.getVocabularyByDifficultyRange(min, max);
   }
 
   getRandomWords(count: number, level?: string): VocabularyItem[] {
@@ -139,12 +141,19 @@ export class VocabularyService {
   }
 
   getMetadata() {
-    return this.data.metadata;
+    const stats = dataAdapter.getVocabularyStats();
+    return {
+      total_words: stats.total,
+      levels: ['A1', 'A2', 'B1', 'B2', 'C1'],
+      categories: ['人物', '动物', '物品', '风景', '人物, 物品', '动物, 风景'],
+      description: '英语学习词汇数据库'
+    };
   }
 
   searchWords(query: string): VocabularyItem[] {
     const lowercaseQuery = query.toLowerCase();
-    return this.data.vocabulary.filter(word => 
+    const allWords = this.getAllWords();
+    return allWords.filter(word => 
       word.english.toLowerCase().includes(lowercaseQuery) ||
       word.chinese.includes(query)
     );
@@ -166,23 +175,21 @@ export class VocabularyService {
     switch (mode) {
       case 'beginner':
         // 小学生模式：只考A级题（A1-A2）
-        words = this.data.vocabulary.filter(word => 
-          word.level === 'A1' || word.level === 'A2'
-        );
+        const beginnerA1 = this.getWordsByLevel('A1');
+        const beginnerA2 = this.getWordsByLevel('A2');
+        words = [...beginnerA1, ...beginnerA2];
         break;
       
       case 'expert':
         // 高手模式：只考B级题（B1-B2）
-        words = this.data.vocabulary.filter(word => 
-          word.level === 'B1' || word.level === 'B2'
-        );
+        const expertB1 = this.getWordsByLevel('B1');
+        const expertB2 = this.getWordsByLevel('B2');
+        words = [...expertB1, ...expertB2];
         break;
       
       case 'hell':
         // 地狱模式：只考C级题（C1）
-        words = this.data.vocabulary.filter(word => 
-          word.level === 'C1'
-        );
+        words = this.getWordsByLevel('C1');
         break;
       
       case 'auto':
@@ -211,23 +218,21 @@ export class VocabularyService {
     switch (mode) {
       case 'beginner':
         // 小学生模式：只考A级题（A1-A2）
-        words = this.data.vocabulary.filter(word => 
-          word.level === 'A1' || word.level === 'A2'
-        );
+        const allBeginnerA1 = this.getWordsByLevel('A1');
+        const allBeginnerA2 = this.getWordsByLevel('A2');
+        words = [...allBeginnerA1, ...allBeginnerA2];
         break;
       
       case 'expert':
         // 高手模式：只考B级题（B1-B2）
-        words = this.data.vocabulary.filter(word => 
-          word.level === 'B1' || word.level === 'B2'
-        );
+        const allExpertB1 = this.getWordsByLevel('B1');
+        const allExpertB2 = this.getWordsByLevel('B2');
+        words = [...allExpertB1, ...allExpertB2];
         break;
       
       case 'hell':
         // 地狱模式：只考C级题（C1）
-        words = this.data.vocabulary.filter(word => 
-          word.level === 'C1'
-        );
+        words = this.getWordsByLevel('C1');
         break;
       
       case 'auto':

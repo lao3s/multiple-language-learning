@@ -51,6 +51,7 @@ export class StorageService {
         averageAccuracy: 0,
         weakWords: [],
         levelStats: [],
+        wordStats: []
       };
     }
     

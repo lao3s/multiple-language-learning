@@ -1,11 +1,8 @@
 import { PhraseData, PhraseItem, StudyMode, DifficultyMode, DifficultyModeConfig } from '@/types/vocabulary';
-import phrasesRawData from '@/data/phrases_c1_extracted.json';
 import { storageService } from './storage';
+import { dataAdapter } from './dataAdapter';
 
 export class PhraseService {
-  private data: PhraseData;
-  private allPhrases: PhraseItem[];
-
   // 难度模式配置（复用单词学习的配置）
   private difficultyModes: DifficultyModeConfig[] = [
     {
@@ -46,32 +43,16 @@ export class PhraseService {
   ];
 
   constructor() {
-    this.data = phrasesRawData as PhraseData;
-    this.allPhrases = this.processRawData();
+    // 不再需要处理JSON数据，改用数据库
   }
 
-  /**
-   * 处理原始JSON数据，将分页结构转换为统一的词组列表
-   */
-  private processRawData(): PhraseItem[] {
-    const phrases: PhraseItem[] = [];
-    
-    // 遍历所有页面的词组
-    Object.entries(this.data.phrases).forEach(([pageKey, pageData]) => {
-      if (Array.isArray(pageData)) {
-        pageData.forEach(phrase => {
-          // 为每个词组添加基础属性
-          phrases.push({
-            english: phrase.english,
-            chinese: phrase.chinese,
-            level: 'C1', // 默认设为C1级别，因为数据来源是C1精通级
-            difficulty_score: this.calculateDifficultyScore(phrase.english)
-          });
-        });
-      }
-    });
-
-    return phrases;
+  private convertDbPhraseToItem(dbPhrase: any): PhraseItem {
+    return {
+      english: dbPhrase.english,
+      chinese: dbPhrase.chinese,
+      level: dbPhrase.level,
+      difficulty_score: dbPhrase.difficulty_score
+    };
   }
 
   /**
@@ -104,16 +85,14 @@ export class PhraseService {
    * 获取所有词组
    */
   getAllPhrases(): PhraseItem[] {
-    return this.allPhrases;
+    return dataAdapter.getAllPhrases();
   }
 
   /**
    * 根据难度分数范围获取词组
    */
   getPhrasesByDifficulty(minScore: number, maxScore: number): PhraseItem[] {
-    return this.allPhrases.filter(phrase => 
-      phrase.difficulty_score! >= minScore && phrase.difficulty_score! <= maxScore
-    );
+    return dataAdapter.getPhrasesByDifficultyRange(minScore, maxScore);
   }
 
   /**
@@ -122,7 +101,7 @@ export class PhraseService {
   getRandomPhrases(count: number, difficultyRange?: { min: number; max: number }): PhraseItem[] {
     let phrases = difficultyRange 
       ? this.getPhrasesByDifficulty(difficultyRange.min, difficultyRange.max)
-      : this.allPhrases;
+      : this.getAllPhrases();
     
     // 获取词组统计，实现智能分布
     const phraseStats = storageService.getPhraseStats();
@@ -346,7 +325,8 @@ export class PhraseService {
    */
   searchPhrases(query: string): PhraseItem[] {
     const lowercaseQuery = query.toLowerCase();
-    return this.allPhrases.filter(phrase => 
+    const allPhrases = this.getAllPhrases();
+    return allPhrases.filter(phrase => 
       phrase.english.toLowerCase().includes(lowercaseQuery) ||
       phrase.chinese.includes(query)
     );
@@ -367,11 +347,12 @@ export class PhraseService {
    * 获取元数据信息
    */
   getMetadata() {
+    const stats = dataAdapter.getPhraseStats();
     return {
-      title: this.data.title,
-      source: this.data.source,
-      total_pages: this.data.total_pages,
-      total_phrases: this.allPhrases.length,
+      title: "多邻国高频词组 C1精通级（130分及以上）",
+      source: "DLG教研团队制作",
+      total_pages: 25,
+      total_phrases: stats.total,
       difficulty_distribution: {
         easy: this.getPhrasesByDifficulty(0, 30).length,
         medium: this.getPhrasesByDifficulty(30, 60).length,
