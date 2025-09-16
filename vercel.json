@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "functions": {
+    "app/api/**": {
+      "maxDuration": 10
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "installCommand": "npm install && npm run migrate"
+}
