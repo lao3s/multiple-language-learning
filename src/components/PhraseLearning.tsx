@@ -38,7 +38,7 @@ export default function PhraseLearning({
   const [options, setOptions] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [inputAnswer, setInputAnswer] = useState<string>('');
-  const [isInputMode, setIsInputMode] = useState(true);
+  const [isInputMode, setIsInputMode] = useState(false); // 词组学习默认使用选择模式
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [session, setSession] = useState<PhraseStudySession | null>(null);

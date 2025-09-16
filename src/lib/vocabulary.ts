@@ -120,11 +120,7 @@ export class VocabularyService {
   }
 
   generateOptions(correctWord: VocabularyItem, mode: StudyMode, count: number = 4): string[] {
-    console.log('🎯 generateOptions调用 - 正确词汇:', correctWord);
-    console.log('🎯 generateOptions调用 - 模式:', mode);
-    
     const allWords = this.getAllWords();
-    console.log('🎯 generateOptions调用 - 可用词汇数量:', allWords.length);
     
     if (allWords.length === 0) {
       console.error('❌ generateOptions - 没有可用词汇');
@@ -136,7 +132,6 @@ export class VocabularyService {
     // Add correct answer
     const correctAnswer = mode === 'chinese-to-english' ? correctWord.english : correctWord.chinese;
     options.add(correctAnswer);
-    console.log('✅ generateOptions - 正确答案:', correctAnswer);
 
     // Add random wrong answers
     let attempts = 0;
@@ -146,14 +141,11 @@ export class VocabularyService {
       
       if (option !== correctAnswer) {
         options.add(option);
-        console.log('➕ generateOptions - 添加选项:', option);
       }
       attempts++;
     }
 
-    const result = Array.from(options).sort(() => Math.random() - 0.5);
-    console.log('🏁 generateOptions - 最终结果:', result);
-    return result;
+    return Array.from(options).sort(() => Math.random() - 0.5);
   }
 
   getMetadata() {

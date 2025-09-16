@@ -39,7 +39,7 @@ export default function VocabularyLearning({
   const [options, setOptions] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [inputAnswer, setInputAnswer] = useState<string>('');
-  const [isInputMode, setIsInputMode] = useState(true);
+  const [isInputMode, setIsInputMode] = useState(true); // 单词学习默认使用输入模式
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [session, setSession] = useState<StudySession | null>(null);
@@ -188,10 +188,7 @@ export default function VocabularyLearning({
     
     // 只在选择模式下生成选项
     if (!isInputMode) {
-      console.log('🔍 生成选项 - 当前词汇:', word);
-      console.log('🔍 生成选项 - 问题模式:', questionMode);
       const questionOptions = vocabularyService.generateOptions(word, questionMode);
-      console.log('🔍 生成选项 - 结果:', questionOptions);
       setOptions(questionOptions);
     } else {
       setOptions([]);
